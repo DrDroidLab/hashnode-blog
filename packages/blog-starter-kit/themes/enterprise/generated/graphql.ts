@@ -914,6 +914,12 @@ export type CreateDocumentationLinkInput = {
   label: Scalars['String']['input'];
   projectId: Scalars['ID']['input'];
   url: Scalars['String']['input'];
+  /**
+   * The slug of the version the new link should be created in.
+   *
+   * Defaults to the default version slug.
+   */
+  versionSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateDocumentationLinkPayload = {
@@ -934,6 +940,12 @@ export type CreateDocumentationPageDraftInput = {
   /** The slug of the path used to generate the path. */
   slug?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * The slug of the version the new page should be created in.
+   *
+   * Defaults to the default version slug.
+   */
+  versionSlug?: InputMaybe<Scalars['String']['input']>;
   /** The visibility of the page. */
   visibility?: InputMaybe<DocumentationSidebarItemVisibility>;
 };
@@ -950,6 +962,8 @@ export type CreateDocumentationPreviewPageInput = {
   content?: InputMaybe<Scalars['String']['input']>;
   /** The description of the page */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The format of the page. Could be MDX or MD. */
+  format?: InputMaybe<DocumentationPageFormat>;
   /** The ID of the page to create */
   id?: InputMaybe<Scalars['ID']['input']>;
   /** The label of the page on the sidebar */
@@ -988,6 +1002,12 @@ export type CreateDocumentationSectionInput = {
   projectId: Scalars['ID']['input'];
   /** The slug of the section used to generate the path. */
   slug?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * The slug of the version the new section should be created in.
+   *
+   * Defaults to the default version slug.
+   */
+  versionSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateDocumentationSectionPayload = {
@@ -1286,6 +1306,16 @@ export type DocsCustomPage = Node & {
   visibility: DocumentationSidebarItemVisibility;
 };
 
+export type DocsCustomPageConnection = PageConnection & {
+  __typename?: 'DocsCustomPageConnection';
+  /** A list docs custom pages */
+  nodes: Array<DocsCustomPage>;
+  /** Information to aid in pagination. */
+  pageInfo: OffsetPageInfo;
+  /** Total number of docs custom pages. */
+  totalDocuments: Scalars['Int']['output'];
+};
+
 export type DocsProjectInvitedMembers = {
   __typename?: 'DocsProjectInvitedMembers';
   email: Scalars['String']['output'];
@@ -1308,10 +1338,8 @@ export type DocsVisitors = {
 
 export type DocumentationApiReference = IGuide & {
   __typename?: 'DocumentationApiReference';
-  /** The parsed Swagger Definition of the API Reference. */
-  definition?: Maybe<Scalars['String']['output']>;
   /** The base64 encoded gzip compressed string of the parsed OpenAPI Definition of the API Reference. */
-  definitionV2?: Maybe<Scalars['String']['output']>;
+  definition: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   /**
    * A guide can be locked if the subscription doesn't cover to having this guide.
@@ -1323,6 +1351,7 @@ export type DocumentationApiReference = IGuide & {
   name: Scalars['String']['output'];
   /** OG meta-data of the page. Contains image url used in open graph meta tags. */
   ogMetaData?: Maybe<OpenGraphMetaData>;
+  /** The provider of the guide. */
   provider: GuideProvider;
   /** URL of the published api reference. */
   publishedUrl?: Maybe<Scalars['String']['output']>;
@@ -1330,8 +1359,9 @@ export type DocumentationApiReference = IGuide & {
   seo?: Maybe<Seo>;
   slug: Scalars['String']['output'];
   status: DocumentationGuideItemStatus;
-  /** URL of the API definition this guide is based on. */
+  /** URL of the OpenAPI definition used by the default version of this guide. */
   url: Scalars['String']['output'];
+  /** The ID of the default version. */
   versionId?: Maybe<Scalars['String']['output']>;
 };
 
@@ -1352,15 +1382,22 @@ export type DocumentationGuide = IGuide & {
   page?: Maybe<DocumentationPage>;
   provider: GuideProvider;
   publishedPage?: Maybe<DocumentationPage>;
+  /** Only published sidebar items of the default version of this guide. */
   publishedSidebarItems: Array<DocumentationSidebarItem>;
   redirectedPublishedPage?: Maybe<DocumentationPage>;
   /** SEO information of the page. Contains title and description used in meta tags. */
   seo?: Maybe<Seo>;
+  /** Sidebar items of the default version of this guide. */
   sidebarItems: Array<DocumentationSidebarItem>;
   slug: Scalars['String']['output'];
   status: DocumentationGuideItemStatus;
-  /** URL of the published guide. */
+  /**
+   * URL of the published guide.
+   *
+   * Example: `https://example.com/my-guide-slug`
+   */
   url?: Maybe<Scalars['String']['output']>;
+  /** The ID of the default version. */
   versionId?: Maybe<Scalars['String']['output']>;
 };
 
@@ -1478,6 +1515,7 @@ export type DocumentationPage = {
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   draft: DocumentationPageDraft;
+  format: DocumentationPageFormat;
   guideSlug: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   /** OG meta-data of the page. Contains image url used in open graph meta tags. */
@@ -1495,7 +1533,8 @@ export type DocumentationPage = {
 
 export type DocumentationPageContent = {
   __typename?: 'DocumentationPageContent';
-  mdx: Scalars['String']['output'];
+  md?: Maybe<Scalars['String']['output']>;
+  mdx?: Maybe<Scalars['String']['output']>;
 };
 
 export type DocumentationPageDraft = {
@@ -1505,12 +1544,21 @@ export type DocumentationPageDraft = {
   title: Scalars['String']['output'];
 };
 
+export enum DocumentationPageFormat {
+  Md = 'MD',
+  Mdx = 'MDX'
+}
+
 export type DocumentationProject = Node & {
   __typename?: 'DocumentationProject';
   ai?: Maybe<DocumentationProjectAiPreference>;
   analytics: DocumentationProjectAnalytics;
   appearance: DocumentationProjectAppearance;
   createdAt: Scalars['DateTime']['output'];
+  /** Returns a custom page with the given slug. */
+  customPage?: Maybe<DocsCustomPage>;
+  /** Returns a list of custom pages belonging to the project. */
+  customPages: DocsCustomPageConnection;
   defaultGuide?: Maybe<DocumentationGuideItem>;
   description?: Maybe<Scalars['String']['output']>;
   domain?: Maybe<DocumentationProjectDomainSettings>;
@@ -1540,6 +1588,17 @@ export type DocumentationProject = Node & {
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
   /** URL of the documentation project. */
   url: Scalars['String']['output'];
+};
+
+
+export type DocumentationProjectCustomPageArgs = {
+  slug: Scalars['String']['input'];
+};
+
+
+export type DocumentationProjectCustomPagesArgs = {
+  page: Scalars['Int']['input'];
+  pageSize: Scalars['Int']['input'];
 };
 
 
@@ -1623,6 +1682,7 @@ export type DocumentationProjectAnalyticsVisitorsArgs = {
 
 export type DocumentationProjectAppearance = {
   __typename?: 'DocumentationProjectAppearance';
+  customScript?: Maybe<Scalars['String']['output']>;
   defaultDocsTheme: DefaultDocsTheme;
   favIconUrl?: Maybe<Scalars['String']['output']>;
   getStarted?: Maybe<DocumentationProjectGetStarted>;
@@ -1632,6 +1692,7 @@ export type DocumentationProjectAppearance = {
 };
 
 export type DocumentationProjectAppearanceInput = {
+  customScript?: InputMaybe<Scalars['String']['input']>;
   defaultDocsTheme?: InputMaybe<DefaultDocsTheme>;
   favIconUrl?: InputMaybe<Scalars['String']['input']>;
   getStarted?: InputMaybe<DocumentationProjectGetStartedInput>;
@@ -1665,6 +1726,8 @@ export type DocumentationProjectFeatures = {
   __typename?: 'DocumentationProjectFeatures';
   /** Collaboration feature for the docs project which enables collaborative editing in the page editor. */
   collaboration: CollaborationFeature;
+  /** GitHub sync feature for the docs project which enables syncing the docs project with a GitHub repository. */
+  ghSync: GitHubSyncFeature;
 };
 
 export type DocumentationProjectGetStarted = {
@@ -2315,6 +2378,13 @@ export type GitHubActivityLog = Node & {
   status: GitHubSyncStatus;
 };
 
+/** Contains the flag indicating if the GitHub sync feature is enabled or not. */
+export type GitHubSyncFeature = Feature & {
+  __typename?: 'GitHubSyncFeature';
+  /** A flag indicating if the GitHub sync feature is enabled or not. */
+  isEnabled: Scalars['Boolean']['output'];
+};
+
 export enum GitHubSyncStatus {
   /** The sync is in progress */
   Building = 'BUILDING',
@@ -2736,6 +2806,7 @@ export type IGuide = {
   seo?: Maybe<Seo>;
   slug: Scalars['String']['output'];
   status: DocumentationGuideItemStatus;
+  /** The ID of the default version. */
   versionId?: Maybe<Scalars['String']['output']>;
 };
 
@@ -3019,6 +3090,10 @@ export type Mutation = {
   mapDocumentationProjectCustomDomainWwwRedirect: MapDocumentationProjectCustomDomainWwwRedirectPayload;
   moveDocumentationSidebarItem: MoveDocumentationSidebarItemPayload;
   publishDocumentationApiReference: PublishDocumentationApiReferencePayload;
+  /**
+   * Publishes the default version of the guide.
+   * @deprecated Use `publishDocumentationGuideVersion` instead
+   */
   publishDocumentationGuide: PublishDocumentationGuidePayload;
   publishDocumentationPageDraft: PublishDocumentationPageDraftPayload;
   /** Publishes an existing draft as a post. */
@@ -4987,6 +5062,10 @@ export type PublicationSearchableDraftConnectionFilter = {
   authorIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Search filter will be applied to the title of a draft */
   search?: InputMaybe<Scalars['String']['input']>;
+  /** An array of tag Ids to filter the drafts. */
+  tagIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter based on time range. */
+  time?: InputMaybe<TimeFilter>;
 };
 
 /**
@@ -5750,6 +5829,10 @@ export type SearchPostsOfPublicationFilter = {
   publicationId: Scalars['ObjectId']['input'];
   /** The query to be searched in post. */
   query?: InputMaybe<Scalars['String']['input']>;
+  /** An array of tag Ids to filter the posts. */
+  tagIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter based on time range. */
+  time?: InputMaybe<TimeFilter>;
 };
 
 export type SearchUser = Node & {
