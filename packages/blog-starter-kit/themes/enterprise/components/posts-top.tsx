@@ -18,30 +18,41 @@ function PostsTop() {
 	} = router;
 
 	// Function to handle clicks and update query params for multi-select
-	const handleClick = (itemType: string) => {
-		// Parse the existing types from query (it might be a string or array)
-		const selectedTypes = Array.isArray(types) ? types : types ? [types] : [];
+	// const handleClick = (itemType: string) => {
+	// 	// Parse the existing types from query (it might be a string or array)
+	// 	const selectedTypes = Array.isArray(types) ? types : types ? [types] : [];
 
-		// Toggle the selection (add or remove the type)
-		const updatedTypes = selectedTypes.includes(itemType)
-			? selectedTypes.filter((t) => t !== itemType) // Remove the type
-			: [...selectedTypes, itemType]; // Add the type
+	// 	// Toggle the selection (add or remove the type)
+	// 	const updatedTypes = selectedTypes.includes(itemType)
+	// 		? selectedTypes.filter((t) => t !== itemType) // Remove the type
+	// 		: [...selectedTypes, itemType]; // Add the type
 
-		// Update query params, passing an empty object if no types are selected
-		router.push({
-			pathname: '',
-			query: updatedTypes.length > 0 ? { types: updatedTypes } : {},
-		});
-	};
+	// 	// Update query params, passing an empty object if no types are selected
+	// 	router.push({
+	// 		pathname: '',
+	// 		query: updatedTypes.length > 0 ? { types: updatedTypes } : {},
+	// 	});
+	// };
 
-	// Check if "All" is selected
-	const isAllSelected = !types || (Array.isArray(types) && types.length === 0);
+	// // Check if "All" is selected
+	// const isAllSelected = !types || (Array.isArray(types) && types.length === 0);
 
 	return (
 		<div className="grid w-full grid-cols-4 gap-2">
 			<div className="col-span-4 grid grid-cols-1 gap-2 lg:col-span-3">
 				<div className="flex items-center gap-3">
-					<button
+					{navbarItems.map((item) => (
+						<a
+							key={item.id}
+							href={`${process.env.NEXT_PUBLIC_BASE_URL}${item.url.split('.io')[1]}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="rounded-xl border px-2 py-1 text-sm text-slate-500 ring-slate-400 transition-all hover:ring-1 dark:border-neutral-800 dark:ring-neutral-600"
+						>
+							{item.label}
+						</a>
+					))}
+					{/* <button
 						onClick={() => router.push({ pathname: '', query: {} })} // Deselect all types
 						className={`${
 							isAllSelected ? 'bg-slate-400 text-white dark:bg-slate-500 dark:text-neutral-900' : ''
@@ -67,7 +78,7 @@ function PostsTop() {
 								{item.label}
 							</button>
 						);
-					})}
+					})} */}
 				</div>
 			</div>
 			<div className="col-span-4 grid w-full grid-cols-1 lg:col-span-1">
