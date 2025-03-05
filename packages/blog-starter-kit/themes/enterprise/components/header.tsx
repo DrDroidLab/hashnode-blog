@@ -8,7 +8,6 @@ import HamburgerSVG from './icons/svgs/HamburgerSVG';
 import { PublicationLogo } from './publication-logo';
 import PublicationSidebar from './sidebar';
 import { SocialLinks } from './social-links';
-import TopBar from './top-bar';
 
 function hasUrl(
 	navbarItem: PublicationNavbarItem,
@@ -67,7 +66,7 @@ export const Header = () => {
 
 	return (
 		<header className="sticky top-0 z-10 bg-white dark:bg-neutral-900">
-			<TopBar />
+			{/* <TopBar /> */}
 			<nav className="border-b p-4 dark:border-neutral-800">
 				<Container className="grid w-full grid-cols-6 gap-5 px-5">
 					<div className="col-span-2 flex flex-1 flex-row items-center gap-2 lg:col-span-2">

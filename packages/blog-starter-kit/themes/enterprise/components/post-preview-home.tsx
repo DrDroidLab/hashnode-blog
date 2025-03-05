@@ -46,7 +46,7 @@ export const PostPreviewHome = ({
 				<div className="col-span-2 hidden xl:block">
 					{author.name && (
 						<p className="w-fit rounded-full border px-2 py-1 text-center text-xs font-light text-slate-500 dark:border-neutral-800 xl:text-xs">
-							{series.name}
+							{series?.name}
 						</p>
 					)}
 				</div>

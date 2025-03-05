@@ -76,6 +76,27 @@ type AddCommentPayload {
   comment: Comment
 }
 
+input AddContentBlockInput {
+  content: String!
+  embedId: String!
+  label: String!
+  projectId: ID!
+}
+
+type AddContentBlockPayload {
+  project: DocumentationProject!
+}
+
+input AddCustomMdxComponentInput {
+  code: String!
+  componentId: String!
+  projectId: ID!
+}
+
+type AddCustomMdxComponentPayload {
+  project: DocumentationProject!
+}
+
 input AddDocumentationProjectCustomDomainInput {
   domain: String!
   projectId: ID!
@@ -167,6 +188,14 @@ type Badge implements Node {
   name: String!
   """A flag to determine if the badge is hidden."""
   suppressed: Boolean
+}
+
+"""
+Contains information about banner image options of the post. Like URL of the banner image, attribution, etc.
+"""
+input BannerImageOptionsInput {
+  """The URL of the banner image."""
+  bannerImageURL: String
 }
 
 """
@@ -897,6 +926,12 @@ input CreateDocumentationLinkInput {
   label: String!
   projectId: ID!
   url: String!
+  """
+  The slug of the version the new link should be created in.
+  
+  Defaults to the default version slug.
+  """
+  versionSlug: String
 }
 
 type CreateDocumentationLinkPayload {
@@ -916,6 +951,12 @@ input CreateDocumentationPageDraftInput {
   """The slug of the path used to generate the path."""
   slug: String
   title: String = "Untitled Page"
+  """
+  The slug of the version the new page should be created in.
+  
+  Defaults to the default version slug.
+  """
+  versionSlug: String
   """The visibility of the page."""
   visibility: DocumentationSidebarItemVisibility
 }
@@ -931,6 +972,8 @@ input CreateDocumentationPreviewPageInput {
   content: String
   """The description of the page"""
   description: String
+  """The format of the page. Could be MDX or MD."""
+  format: DocumentationPageFormat
   """The ID of the page to create"""
   id: ID
   """The label of the page on the sidebar"""
@@ -968,6 +1011,12 @@ input CreateDocumentationSectionInput {
   projectId: ID!
   """The slug of the section used to generate the path."""
   slug: String
+  """
+  The slug of the version the new section should be created in.
+  
+  Defaults to the default version slug.
+  """
+  versionSlug: String
 }
 
 type CreateDocumentationSectionPayload {
@@ -976,6 +1025,8 @@ type CreateDocumentationSectionPayload {
 }
 
 input CreateDraftInput {
+  """Options for the banner image of the resulting draft."""
+  bannerImageOptions: BannerImageOptionsInput
   """Ids of the co-authors of the resulting draft."""
   coAuthors: [ObjectId!]
   """Content of the resulting draft in markdown format."""
@@ -1184,6 +1235,24 @@ enum DefaultDocsTheme {
   LIGHT
 }
 
+input DeleteContentBlockInput {
+  embedId: String!
+  projectId: ID!
+}
+
+type DeleteContentBlockPayload {
+  project: DocumentationProject!
+}
+
+input DeleteCustomMdxComponentInput {
+  componentId: String!
+  projectId: ID!
+}
+
+type DeleteCustomMdxComponentPayload {
+  project: DocumentationProject!
+}
+
 """Input to delete a role based invite."""
 input DeleteRoleBasedInviteInput {
   """The ID of the role based invite."""
@@ -1282,6 +1351,22 @@ type DocsCustomPage implements Node {
   visibility: DocumentationSidebarItemVisibility!
 }
 
+type DocsCustomPageConnection implements PageConnection {
+  """A list docs custom pages"""
+  nodes: [DocsCustomPage!]!
+  """Information to aid in pagination."""
+  pageInfo: OffsetPageInfo!
+  """Total number of docs custom pages."""
+  totalDocuments: Int!
+}
+
+enum DocsGitHubActivityDeploymentType {
+  """The deployment is a preview deployment."""
+  PREVIEW
+  """The deployment is a production deployment."""
+  PRODUCTION
+}
+
 type DocsProjectInvitedMembers {
   email: String!
   role: DocumentationMemberRole!
@@ -1304,12 +1389,10 @@ interface DocsVisitors implements Node {
 }
 
 type DocumentationApiReference implements IGuide {
-  """The parsed Swagger Definition of the API Reference."""
-  definition: String
   """
   The base64 encoded gzip compressed string of the parsed OpenAPI Definition of the API Reference.
   """
-  definitionV2: String
+  definition: String!
   id: ID!
   """
   A guide can be locked if the subscription doesn't cover to having this guide.
@@ -1323,6 +1406,7 @@ type DocumentationApiReference implements IGuide {
   OG meta-data of the page. Contains image url used in open graph meta tags.
   """
   ogMetaData: OpenGraphMetaData
+  """The provider of the guide."""
   provider: GuideProvider!
   """URL of the published api reference."""
   publishedUrl: String
@@ -1332,8 +1416,11 @@ type DocumentationApiReference implements IGuide {
   seo: SEO
   slug: String!
   status: DocumentationGuideItemStatus!
-  """URL of the API definition this guide is based on."""
+  """
+  URL of the OpenAPI definition used by the default version of this guide.
+  """
   url: String!
+  """The ID of the default version."""
   versionId: String
 }
 
@@ -1352,29 +1439,54 @@ type DocumentationGuide implements IGuide {
   OG meta-data of the page. Contains image url used in open graph meta tags.
   """
   ogMetaData: OpenGraphMetaData
+  """Page of any version of this guide."""
   page(id: ID, path: String): DocumentationPage
   provider: GuideProvider!
+  """Only published page of any version of this guide."""
   publishedPage(id: ID, path: String): DocumentationPage
+  """Only published sidebar items of the default version of this guide."""
   publishedSidebarItems: [DocumentationSidebarItem!]!
+  """
+  Only published page of any version of this guide. The path may include the version slug.
+  
+  Takes redirects into account and may return the page that the requested page redirects to.
+  
+  If the path is only a version slug, it will redirect to the first page of that version.
+  """
   redirectedPublishedPage(id: ID, path: String): DocumentationPage
   """
   SEO information of the page. Contains title and description used in meta tags.
   """
   seo: SEO
+  """Sidebar items of the default version of this guide."""
   sidebarItems: [DocumentationSidebarItem!]!
   slug: String!
   status: DocumentationGuideItemStatus!
-  """URL of the published guide."""
+  """
+  URL of the published guide.
+  
+  Example: `https://example.com/my-guide-slug`
+  """
   url: String
+  """The ID of the default version."""
   versionId: String
 }
 
 union DocumentationGuideItem = DocumentationApiReference | DocumentationGuide
 
 enum DocumentationGuideItemStatus {
-  DELETED
   PUBLISHED
   UNPUBLISHED
+}
+
+"""Visibility options for documentation guides."""
+enum DocumentationGuideVisibility {
+  """
+  Not visible in public listings. Only visible to users with access to the project.
+  """
+  HIDDEN
+  """Visible to all users."""
+  PUBLIC
 }
 
 type DocumentationLink implements IDocumentationSidebarItem {
@@ -1402,6 +1514,8 @@ type DocumentationNavbarColumn implements Node {
   items: [DocumentationNavbarItem!]!
   """The label of the column."""
   label: String!
+  """The logo of the column."""
+  logo: URL
   """The date the column was last updated."""
   updatedAt: DateTime
 }
@@ -1459,6 +1573,7 @@ type DocumentationPage {
   createdAt: DateTime!
   description: String
   draft: DocumentationPageDraft!
+  format: DocumentationPageFormat!
   guideSlug: String!
   id: ID!
   """
@@ -1473,13 +1588,18 @@ type DocumentationPage {
   status: DocumentationSidebarItemStatus!
   title: String!
   updatedAt: DateTime
-  """URL of the published page."""
+  """
+  URL of the published page.
+  
+  Returns `null` if the page is not published.
+  """
   url: String
   visibility: DocumentationSidebarItemVisibility!
 }
 
 type DocumentationPageContent {
-  mdx: String!
+  md: String
+  mdx: String
 }
 
 type DocumentationPageDraft {
@@ -1488,11 +1608,28 @@ type DocumentationPageDraft {
   title: String!
 }
 
+enum DocumentationPageFormat {
+  MD
+  MDX
+}
+
 type DocumentationProject implements Node {
   ai: DocumentationProjectAIPreference
   analytics: DocumentationProjectAnalytics!
   appearance: DocumentationProjectAppearance!
   createdAt: DateTime!
+  """Returns a custom page with the given slug."""
+  customPage(
+    """The slug of the docs custom page to retrieve."""
+    slug: String!
+  ): DocsCustomPage
+  """Returns a list of custom pages belonging to the project."""
+  customPages(
+    """The page number that should be returned."""
+    page: Int!
+    """The number of custom pages to return in a single page."""
+    pageSize: Int!
+  ): DocsCustomPageConnection!
   defaultGuide: DocumentationGuideItem
   description: String
   domain: DocumentationProjectDomainSettings
@@ -1585,6 +1722,7 @@ type DocumentationProjectAnalytics {
 }
 
 type DocumentationProjectAppearance {
+  customScript: String
   defaultDocsTheme: DefaultDocsTheme!
   favIconUrl: String
   getStarted: DocumentationProjectGetStarted
@@ -1594,12 +1732,37 @@ type DocumentationProjectAppearance {
 }
 
 input DocumentationProjectAppearanceInput {
+  customScript: String
   defaultDocsTheme: DefaultDocsTheme
   favIconUrl: String
   getStarted: DocumentationProjectGetStartedInput
   logoDarkThemeUrl: String
   logoUrl: String
   primaryColor: String
+}
+
+type DocumentationProjectContentBlock implements Node {
+  """The MDX string of the content block."""
+  content: String!
+  """embedId, which can be used to embed the content block in the editor."""
+  embedId: String!
+  """The unique identifier for the content block"""
+  id: ID!
+  """
+  label, can be used to identify the content block from the dropdown in the editor.
+  """
+  label: String!
+}
+
+type DocumentationProjectCustomComponent implements Node {
+  """The code of the custom component."""
+  code: String!
+  """componentId, can be embedded as %%[componentId] in the docs"""
+  componentId: String!
+  """The unique identifier of the custom component"""
+  id: ID!
+  """The transpiled code of the custom component."""
+  transpiledCode: String!
 }
 
 type DocumentationProjectCustomDomain {
@@ -1625,6 +1788,14 @@ type DocumentationProjectFeatures {
   Collaboration feature for the docs project which enables collaborative editing in the page editor.
   """
   collaboration: CollaborationFeature!
+  """
+  GitHub sync feature for the docs project which enables syncing the docs project with a GitHub repository.
+  """
+  ghSync: GitHubSyncFeature!
+  """
+  Versioning feature for the docs project which enables creating different versions of docs guides.
+  """
+  versioning: VersioningFeature!
 }
 
 type DocumentationProjectGetStarted {
@@ -1648,8 +1819,12 @@ type DocumentationProjectIntegrations {
   hotjarSiteID: String
   """Intercom ID for integration with Intercom"""
   intercomID: String
+  """Koala Public Key for integration with Koala."""
+  koalaPublicKey: String
   """The meta tags associated with the documentation project."""
   metaTags: String
+  """MS Clarity ID for integration with Microsoft Clarity."""
+  msClarityID: String
 }
 
 input DocumentationProjectIntegrationsInput {
@@ -1658,7 +1833,9 @@ input DocumentationProjectIntegrationsInput {
   gaTrackingID: String
   hotjarSiteID: String
   intercomID: String
+  koalaPublicKey: String
   metaTags: String
+  msClarityID: String
 }
 
 """Contains the pending invite information."""
@@ -1674,6 +1851,8 @@ type DocumentationProjectInvite implements Node {
 }
 
 type DocumentationProjectLinks {
+  """Bluesky URL of the documentation project."""
+  bluesky: String
   """Daily.dev URL of the documentation project."""
   dailydev: String
   """GitHub URL of the documentation project."""
@@ -1697,6 +1876,7 @@ type DocumentationProjectLinks {
 }
 
 input DocumentationProjectLinksInput {
+  bluesky: String
   dailydev: String
   github: String
   githubRepository: String
@@ -1841,7 +2021,11 @@ type DocumentationSidebarItemPage implements IDocumentationNestableSidebarItem &
   path: String!
   status: DocumentationSidebarItemStatus!
   updatedAt: DateTime
-  """URL of the published page."""
+  """
+  URL of the published page.
+  
+  Returns `null` if the page is not published.
+  """
   url: String
   visibility: DocumentationSidebarItemVisibility!
 }
@@ -1894,6 +2078,11 @@ A draft is a post that is not published yet.
 type Draft implements Node {
   """The author of the draft."""
   author: User!
+  """
+  The banner image preference of the draft. Contains banner image URL and other details.
+  Similar to cover image but user can use banner image as alternate cover on single post page.
+  """
+  bannerImage: DraftBannerImage
   canonicalUrl: String
   """
   Returns the user details of the co-authors of the post.
@@ -1968,6 +2157,12 @@ type DraftBackup {
   at: DateTime
   """The status of the backup i.e., success or failure."""
   status: BackupStatus
+}
+
+"""Contains information about the banner image of the draft."""
+type DraftBannerImage {
+  """The URL of the banner image."""
+  url: String!
 }
 
 """
@@ -2268,6 +2463,14 @@ type GitHubActivityLog implements Node {
   branchName: String!
   """The date the log was created."""
   createdAt: DateTime!
+  """The deployment type related to the log."""
+  deploymentType: DocsGitHubActivityDeploymentType!
+  """
+  The deployment URL. For preview activities, the deployment URL is different for every commit. For production deployments, the deploymentUrl points to the main project subdomain.
+  """
+  deploymentUrl: String!
+  """The errors occurred during the sync."""
+  errors: [GitHubSyncError!]!
   """The commit ID."""
   gitCommitId: String!
   """The commit message."""
@@ -2278,6 +2481,34 @@ type GitHubActivityLog implements Node {
   id: ID!
   """The status of the sync."""
   status: GitHubSyncStatus!
+}
+
+type GitHubSyncError {
+  """The error code denoting the reason of failure for GitHub sync."""
+  code: GitHubSyncErrorCode!
+  """List of error messages"""
+  messages: [String!]!
+}
+
+enum GitHubSyncErrorCode {
+  """Indicates that the project has configuration errors."""
+  CONFIGURATION_ERROR
+  """Indicates that the project has invalid content."""
+  CONTENT_ERROR
+  """Indicates that the project has duplicate paths."""
+  DUPLICATE_PATHS
+  """Indicates that the project has duplicate slugs."""
+  DUPLICATE_SLUGS
+  """Indicates that the project has missing files."""
+  MISSING_FILES
+}
+
+"""
+Contains the flag indicating if the GitHub sync feature is enabled or not.
+"""
+type GitHubSyncFeature implements Feature {
+  """A flag indicating if the GitHub sync feature is enabled or not."""
+  isEnabled: Boolean!
 }
 
 enum GitHubSyncStatus {
@@ -2653,6 +2884,12 @@ enum GuideProvider {
   HASHNODE
 }
 
+enum GuideVersionStatus {
+  DEPRECATED
+  STABLE
+  UNSTABLE
+}
+
 type HeadlessCMSFeature implements Feature {
   """A flag indicating if the Headless CMS feature is enabled or not."""
   isEnabled: Boolean!
@@ -2698,7 +2935,35 @@ interface IGuide {
   seo: SEO
   slug: String!
   status: DocumentationGuideItemStatus!
+  """The ID of the default version."""
   versionId: String
+}
+
+interface IGuideVersion {
+  """Internal code name for the version."""
+  codeName: String
+  """Timestamp of when the version was created."""
+  createdAt: DateTime!
+  """The version that this version was forked from."""
+  forkedFrom: IGuideVersion
+  """Unique identifier for the guide version."""
+  id: ID!
+  """
+  Indicates if this is the default version.
+  
+  There is always exactly one default version at a given time.
+  """
+  isDefault: Boolean!
+  """Display name of the version."""
+  name: String!
+  """URL-friendly identifier for the version."""
+  slug: String!
+  """Status of the guide version."""
+  status: GuideVersionStatus!
+  """Timestamp of the last update to the version."""
+  updatedAt: DateTime
+  """Visibility of the guide version."""
+  visibility: DocumentationGuideVisibility!
 }
 
 """
@@ -2931,6 +3196,8 @@ type Mutation {
   acceptRoleBasedInvite(input: AcceptRoleBasedInviteInput!): AcceptRoleBasedInvitePayload!
   """Adds a comment to a post."""
   addComment(input: AddCommentInput!): AddCommentPayload!
+  addContentBlock(input: AddContentBlockInput!): AddContentBlockPayload!
+  addCustomMdxComponent(input: AddCustomMdxComponentInput!): AddCustomMdxComponentPayload!
   addDocumentationProjectCustomDomain(input: AddDocumentationProjectCustomDomainInput!): AddDocumentationProjectCustomDomainPayload!
   """Adds a post to a series."""
   addPostToSeries(input: AddPostToSeriesInput!): AddPostToSeriesPayload!
@@ -2963,6 +3230,8 @@ type Mutation {
   """Creates a new series."""
   createSeries(input: CreateSeriesInput!): CreateSeriesPayload!
   createWebhook(input: CreateWebhookInput!): CreateWebhookPayload!
+  deleteContentBlock(input: DeleteContentBlockInput!): DeleteContentBlockPayload!
+  deleteCustomMdxComponent(input: DeleteCustomMdxComponentInput!): DeleteCustomMdxComponentPayload!
   """Deletes a role based invite."""
   deleteRoleBasedInvite(input: DeleteRoleBasedInviteInput!): DeleteRoleBasedInvitePayload!
   deleteWebhook(id: ID!): DeleteWebhookPayload!
@@ -2996,7 +3265,8 @@ type Mutation {
   mapDocumentationProjectCustomDomainWwwRedirect(input: MapDocumentationProjectCustomDomainWwwRedirectInput!): MapDocumentationProjectCustomDomainWwwRedirectPayload!
   moveDocumentationSidebarItem(input: MoveDocumentationSidebarItemInput!): MoveDocumentationSidebarItemPayload!
   publishDocumentationApiReference(input: PublishDocumentationApiReferenceInput!): PublishDocumentationApiReferencePayload!
-  publishDocumentationGuide(input: PublishDocumentationGuideInput!): PublishDocumentationGuidePayload!
+  """Publishes the default version of the guide."""
+  publishDocumentationGuide(input: PublishDocumentationGuideInput!): PublishDocumentationGuidePayload! @deprecated(reason: "Use `publishDocumentationGuideVersion` instead")
   publishDocumentationPageDraft(input: PublishDocumentationPageDraftInput!): PublishDocumentationPageDraftPayload!
   """Publishes an existing draft as a post."""
   publishDraft(
@@ -3082,6 +3352,8 @@ type Mutation {
   unsubscribeFromNewsletter(input: UnsubscribeFromNewsletterInput!): UnsubscribeFromNewsletterPayload!
   """Updates a comment on a post."""
   updateComment(input: UpdateCommentInput!): UpdateCommentPayload!
+  updateContentBlock(input: UpdateContentBlockInput!): UpdateContentBlockPayload!
+  updateCustomMdxComponent(input: UpdateCustomMdxComponentInput!): UpdateCustomMdxComponentPayload!
   updateDocumentationAppearance(input: UpdateDocumentationAppearanceInput!): UpdateDocumentationAppearancePayload!
   updateDocumentationGeneralSettings(input: UpdateDocumentationGeneralSettingsInput!): UpdateDocumentationGeneralSettingsPayload!
   updateDocumentationGuide(input: UpdateDocumentationGuideInput!): UpdateDocumentationGuidePayload!
@@ -3123,7 +3395,7 @@ type MyUser implements IUser & Node {
   """
   A list of beta features that the user has access to. Only available to the authenticated user.
   """
-  betaFeatures: [BetaFeature!]!
+  betaFeatures: [BetaFeature!]! @deprecated(reason: "Beta features are no longer supported. Will be removed after 15/12/2024")
   """
   The bio of the user. Visible in about me section of the user's profile.
   """
@@ -3429,6 +3701,11 @@ type Post implements Node {
   """Returns the user details of the author of the post."""
   author: User!
   """
+  The banner image preference of the post. Contains banner image URL and other details.
+  It is similar to cover image but users can decide to render banner image of single post view.
+  """
+  bannerImage: PostBannerImage
+  """
   Flag to indicate if the post is bookmarked by the requesting user.
   
   Returns `false` if the user is not authenticated.
@@ -3602,6 +3879,12 @@ type PostBadgesFeature implements Feature {
   items: [PostBadge!]!
 }
 
+"""Contains information about the banner image of the post."""
+type PostBannerImage {
+  """The URL of the banner image."""
+  url: String!
+}
+
 """
 Connection for comments. Contains a list of edges containing nodes.
 Each node holds a comment.
@@ -3747,6 +4030,13 @@ type PostPreferences {
   A flag to indicate if the cover image is shown below title of the post. Default position of cover is top of title.
   """
   stickCoverToBottom: Boolean!
+}
+
+enum PostSortBy {
+  """Sorts posts by date published in ascending order."""
+  DATE_PUBLISHED_ASC
+  """Sorts posts by date published in descending order."""
+  DATE_PUBLISHED_DESC
 }
 
 """
@@ -4091,6 +4381,14 @@ type Publication implements Node {
   isTeam: Boolean!
   """Links to the publication's social media profiles."""
   links: PublicationLinks
+  members(
+    """Filters to be applied to the member list."""
+    filter: PublicationMemberConnectionFilter
+    """The page number that should be returned."""
+    page: Int!
+    """The number of members to return on a single page."""
+    pageSize: Int!
+  ): PublicationMemberConnection!
   """The meta tags associated with the publication."""
   metaTags: String
   """Information about the publication's Open Graph metadata i.e. image."""
@@ -4120,6 +4418,13 @@ type Publication implements Node {
   The publication preferences around layout, theme and other personalisations.
   """
   preferences: Preferences!
+  """Returns a paginated list of public members of the publication."""
+  publicMembers(
+    """The page number that should be returned."""
+    page: Int!
+    """The number of members to return on a single page."""
+    pageSize: Int!
+  ): PublicationMemberConnection!
   """Publications that are recommended by this publication."""
   recommendedPublications: [UserRecommendedPublicationEdge!]!
   """Publications that are recommending this publication."""
@@ -4254,10 +4559,14 @@ type PublicationIntegrations {
   gaTrackingID: String
   """Hotjar Site ID for integration with Hotjar."""
   hotjarSiteID: String
+  """Koala Public Key for integration with Koala."""
+  koalaPublicKey: String
   """Matomo Site ID for integration with Matomo Analytics."""
   matomoSiteID: String
   """Matomo URL for integration with Matomo Analytics."""
   matomoURL: String
+  """MS Clarity ID for integration with Microsoft Clarity."""
+  msClarityID: String
   """
   A flag indicating if the custom domain is enabled for integration with Plausible Analytics.
   """
@@ -4309,6 +4618,8 @@ enum PublicationLayout {
 
 """Contains the publication's social media links."""
 type PublicationLinks {
+  """Bluesky URL of the publication."""
+  bluesky: String
   """Daily.dev URL of the publication."""
   dailydev: String
   """Facebook URL of the publication."""
@@ -4344,6 +4655,23 @@ type PublicationMember implements Node {
   role: UserPublicationRole!
   """The user who is a member of the publication."""
   user: User
+}
+
+type PublicationMemberConnection implements PageConnection {
+  """A list of members"""
+  nodes: [PublicationMember!]!
+  """Information for page based pagination in Member connection."""
+  pageInfo: OffsetPageInfo!
+  """The total number of documents in the connection."""
+  totalDocuments: Int!
+}
+
+"""The filter for the publication member connection."""
+input PublicationMemberConnectionFilter {
+  """
+  Search filter can be used to filter members by their username or email.
+  """
+  search: String
 }
 
 """Publication member privacy state on members page"""
@@ -4407,6 +4735,10 @@ input PublicationPostConnectionFilter {
   deletedOnly: Boolean
   """Remove pinned post from the result set."""
   excludePinnedPost: Boolean
+  """Tags AND filter. All tags must be present in the post."""
+  requiredTagSlugs: [String!]
+  """Tags AND filter. All tags must be present in the post."""
+  requiredTags: [ID!]
   """
   Filtering by tag slugs and tag IDs will return posts that match either of the filters.
   
@@ -4456,6 +4788,10 @@ input PublicationSearchableDraftConnectionFilter {
   authorIds: [ID!]
   """Search filter will be applied to the title of a draft"""
   search: String
+  """An array of tag Ids to filter the drafts."""
+  tagIds: [ID!]
+  """Filter based on time range."""
+  time: TimeFilter
 }
 
 """
@@ -4534,6 +4870,11 @@ type PublishDraftPayload {
 
 """Contains information about the post to be published."""
 input PublishPostInput {
+  """
+  Options for the banner image of the post.
+  It is similar to cover image but users can decide to render banner image of single post view.
+  """
+  bannerImageOptions: BannerImageOptionsInput
   """Ids of the co-authors of the post."""
   coAuthors: [ObjectId!]
   """Content of the post in markdown format."""
@@ -4677,6 +5018,8 @@ type Query {
     filter: SearchPostsOfPublicationFilter!
     """The number of items to be returned per page."""
     first: Int!
+    """The sort order."""
+    sortBy: PostSortBy
   ): SearchPostConnection!
   """Returns tag details by its slug."""
   tag(
@@ -5114,9 +5457,6 @@ Enum of all the scopes that can be used with the @requireAuth directive.
 enum Scope {
   acknowledge_email_import
   active_pro_user
-  assign_pro_publications
-  change_pro_subscription
-  create_pro
   delete_draft
   docs_admin_or_owner
   docs_owner
@@ -5176,6 +5516,12 @@ input SearchPostsOfPublicationFilter {
   publicationId: ObjectId!
   """The query to be searched in post."""
   query: String
+  """Tags AND filter. All tags must be present in the post."""
+  requiredTagsIds: [ID!]
+  """An array of tag Ids to filter the posts."""
+  tagIds: [ID!]
+  """Filter based on time range."""
+  time: TimeFilter
 }
 
 type SearchUser implements Node {
@@ -5277,6 +5623,8 @@ type SetDocumentationSidebarItemVisibilityPayload {
 
 """Available social media links."""
 type SocialMediaLinks {
+  """The user's Bluesky profile."""
+  bluesky: String
   """The user's Facebook profile."""
   facebook: String
   """The user's GitHub profile."""
@@ -5629,6 +5977,27 @@ type UpdateCommentPayload {
   comment: Comment
 }
 
+input UpdateContentBlockInput {
+  content: String!
+  embedId: String!
+  label: String!
+  projectId: ID!
+}
+
+type UpdateContentBlockPayload {
+  project: DocumentationProject!
+}
+
+input UpdateCustomMdxComponentInput {
+  code: String!
+  componentId: String!
+  projectId: ID!
+}
+
+type UpdateCustomMdxComponentPayload {
+  project: DocumentationProject!
+}
+
 input UpdateDocumentationAppearanceInput {
   appearance: DocumentationProjectAppearanceInput!
   projectId: ID!
@@ -5739,6 +6108,8 @@ type UpdateDocumentationSectionPayload {
 }
 
 input UpdatePostInput {
+  """Options for the banner image of the post."""
+  bannerImageOptions: BannerImageOptionsInput
   """
   Update co-authors of the post.
   Must be a member of the publication.
@@ -5948,8 +6319,6 @@ type User implements IUser & Node {
   followsBack: Boolean!
   """The ID of the user. It can be used to identify the user."""
   id: ID!
-  """Whether or not this is a pro user."""
-  isPro: Boolean!
   """The location of the user."""
   location: String
   """The name of the user."""
@@ -6165,8 +6534,6 @@ type UserPublicationsConnection implements Connection {
 
 """Filter to apply to the publications."""
 input UserPublicationsConnectionFilter {
-  """Only return pro publications."""
-  isPro: Boolean
   """
   Only include publication in which the user has one of the provided roles.
   """
@@ -6254,6 +6621,14 @@ type VerifyDocumentationProjectCustomDomainPayload {
   Note, that the verification can also fail.
   """
   project: DocumentationProject
+}
+
+"""
+Contains the flag indicating if the Versioning feature is enabled or not.
+"""
+type VersioningFeature implements Feature {
+  """A flag indicating if the Versioning feature is enabled or not."""
+  isEnabled: Boolean!
 }
 
 """
