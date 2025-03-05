@@ -86,6 +86,29 @@ export type AddCommentPayload = {
   comment?: Maybe<Comment>;
 };
 
+export type AddContentBlockInput = {
+  content: Scalars['String']['input'];
+  embedId: Scalars['String']['input'];
+  label: Scalars['String']['input'];
+  projectId: Scalars['ID']['input'];
+};
+
+export type AddContentBlockPayload = {
+  __typename?: 'AddContentBlockPayload';
+  project: DocumentationProject;
+};
+
+export type AddCustomMdxComponentInput = {
+  code: Scalars['String']['input'];
+  componentId: Scalars['String']['input'];
+  projectId: Scalars['ID']['input'];
+};
+
+export type AddCustomMdxComponentPayload = {
+  __typename?: 'AddCustomMdxComponentPayload';
+  project: DocumentationProject;
+};
+
 export type AddDocumentationProjectCustomDomainInput = {
   domain: Scalars['String']['input'];
   projectId: Scalars['ID']['input'];
@@ -181,6 +204,12 @@ export type Badge = Node & {
   name: Scalars['String']['output'];
   /** A flag to determine if the badge is hidden. */
   suppressed?: Maybe<Scalars['Boolean']['output']>;
+};
+
+/** Contains information about banner image options of the post. Like URL of the banner image, attribution, etc. */
+export type BannerImageOptionsInput = {
+  /** The URL of the banner image. */
+  bannerImageURL?: InputMaybe<Scalars['String']['input']>;
 };
 
 /**
@@ -1017,6 +1046,8 @@ export type CreateDocumentationSectionPayload = {
 };
 
 export type CreateDraftInput = {
+  /** Options for the banner image of the resulting draft. */
+  bannerImageOptions?: InputMaybe<BannerImageOptionsInput>;
   /** Ids of the co-authors of the resulting draft. */
   coAuthors?: InputMaybe<Array<Scalars['ObjectId']['input']>>;
   /** Content of the resulting draft in markdown format. */
@@ -1210,6 +1241,26 @@ export enum DefaultDocsTheme {
   Light = 'LIGHT'
 }
 
+export type DeleteContentBlockInput = {
+  embedId: Scalars['String']['input'];
+  projectId: Scalars['ID']['input'];
+};
+
+export type DeleteContentBlockPayload = {
+  __typename?: 'DeleteContentBlockPayload';
+  project: DocumentationProject;
+};
+
+export type DeleteCustomMdxComponentInput = {
+  componentId: Scalars['String']['input'];
+  projectId: Scalars['ID']['input'];
+};
+
+export type DeleteCustomMdxComponentPayload = {
+  __typename?: 'DeleteCustomMdxComponentPayload';
+  project: DocumentationProject;
+};
+
 /** Input to delete a role based invite. */
 export type DeleteRoleBasedInviteInput = {
   /** The ID of the role based invite. */
@@ -1316,6 +1367,13 @@ export type DocsCustomPageConnection = PageConnection & {
   totalDocuments: Scalars['Int']['output'];
 };
 
+export enum DocsGitHubActivityDeploymentType {
+  /** The deployment is a preview deployment. */
+  Preview = 'PREVIEW',
+  /** The deployment is a production deployment. */
+  Production = 'PRODUCTION'
+}
+
 export type DocsProjectInvitedMembers = {
   __typename?: 'DocsProjectInvitedMembers';
   email: Scalars['String']['output'];
@@ -1379,11 +1437,20 @@ export type DocumentationGuide = IGuide & {
   name: Scalars['String']['output'];
   /** OG meta-data of the page. Contains image url used in open graph meta tags. */
   ogMetaData?: Maybe<OpenGraphMetaData>;
+  /** Page of any version of this guide. */
   page?: Maybe<DocumentationPage>;
   provider: GuideProvider;
+  /** Only published page of any version of this guide. */
   publishedPage?: Maybe<DocumentationPage>;
   /** Only published sidebar items of the default version of this guide. */
   publishedSidebarItems: Array<DocumentationSidebarItem>;
+  /**
+   * Only published page of any version of this guide. The path may include the version slug.
+   *
+   * Takes redirects into account and may return the page that the requested page redirects to.
+   *
+   * If the path is only a version slug, it will redirect to the first page of that version.
+   */
   redirectedPublishedPage?: Maybe<DocumentationPage>;
   /** SEO information of the page. Contains title and description used in meta tags. */
   seo?: Maybe<Seo>;
@@ -1422,9 +1489,16 @@ export type DocumentationGuideRedirectedPublishedPageArgs = {
 export type DocumentationGuideItem = DocumentationApiReference | DocumentationGuide;
 
 export enum DocumentationGuideItemStatus {
-  Deleted = 'DELETED',
   Published = 'PUBLISHED',
   Unpublished = 'UNPUBLISHED'
+}
+
+/** Visibility options for documentation guides. */
+export enum DocumentationGuideVisibility {
+  /** Not visible in public listings. Only visible to users with access to the project. */
+  Hidden = 'HIDDEN',
+  /** Visible to all users. */
+  Public = 'PUBLIC'
 }
 
 export type DocumentationLink = IDocumentationSidebarItem & {
@@ -1454,6 +1528,8 @@ export type DocumentationNavbarColumn = Node & {
   items: Array<DocumentationNavbarItem>;
   /** The label of the column. */
   label: Scalars['String']['output'];
+  /** The logo of the column. */
+  logo?: Maybe<Scalars['URL']['output']>;
   /** The date the column was last updated. */
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
@@ -1526,7 +1602,11 @@ export type DocumentationPage = {
   status: DocumentationSidebarItemStatus;
   title: Scalars['String']['output'];
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
-  /** URL of the published page. */
+  /**
+   * URL of the published page.
+   *
+   * Returns `null` if the page is not published.
+   */
   url?: Maybe<Scalars['String']['output']>;
   visibility: DocumentationSidebarItemVisibility;
 };
@@ -1701,6 +1781,30 @@ export type DocumentationProjectAppearanceInput = {
   primaryColor?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type DocumentationProjectContentBlock = Node & {
+  __typename?: 'DocumentationProjectContentBlock';
+  /** The MDX string of the content block. */
+  content: Scalars['String']['output'];
+  /** embedId, which can be used to embed the content block in the editor. */
+  embedId: Scalars['String']['output'];
+  /** The unique identifier for the content block */
+  id: Scalars['ID']['output'];
+  /** label, can be used to identify the content block from the dropdown in the editor. */
+  label: Scalars['String']['output'];
+};
+
+export type DocumentationProjectCustomComponent = Node & {
+  __typename?: 'DocumentationProjectCustomComponent';
+  /** The code of the custom component. */
+  code: Scalars['String']['output'];
+  /** componentId, can be embedded as %%[componentId] in the docs */
+  componentId: Scalars['String']['output'];
+  /** The unique identifier of the custom component */
+  id: Scalars['ID']['output'];
+  /** The transpiled code of the custom component. */
+  transpiledCode: Scalars['String']['output'];
+};
+
 export type DocumentationProjectCustomDomain = {
   __typename?: 'DocumentationProjectCustomDomain';
   domain: Scalars['String']['output'];
@@ -1728,6 +1832,8 @@ export type DocumentationProjectFeatures = {
   collaboration: CollaborationFeature;
   /** GitHub sync feature for the docs project which enables syncing the docs project with a GitHub repository. */
   ghSync: GitHubSyncFeature;
+  /** Versioning feature for the docs project which enables creating different versions of docs guides. */
+  versioning: VersioningFeature;
 };
 
 export type DocumentationProjectGetStarted = {
@@ -1753,8 +1859,12 @@ export type DocumentationProjectIntegrations = {
   hotjarSiteID?: Maybe<Scalars['String']['output']>;
   /** Intercom ID for integration with Intercom */
   intercomID?: Maybe<Scalars['String']['output']>;
+  /** Koala Public Key for integration with Koala. */
+  koalaPublicKey?: Maybe<Scalars['String']['output']>;
   /** The meta tags associated with the documentation project. */
   metaTags?: Maybe<Scalars['String']['output']>;
+  /** MS Clarity ID for integration with Microsoft Clarity. */
+  msClarityID?: Maybe<Scalars['String']['output']>;
 };
 
 export type DocumentationProjectIntegrationsInput = {
@@ -1763,7 +1873,9 @@ export type DocumentationProjectIntegrationsInput = {
   gaTrackingID?: InputMaybe<Scalars['String']['input']>;
   hotjarSiteID?: InputMaybe<Scalars['String']['input']>;
   intercomID?: InputMaybe<Scalars['String']['input']>;
+  koalaPublicKey?: InputMaybe<Scalars['String']['input']>;
   metaTags?: InputMaybe<Scalars['String']['input']>;
+  msClarityID?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Contains the pending invite information. */
@@ -1779,6 +1891,8 @@ export type DocumentationProjectInvite = Node & {
 
 export type DocumentationProjectLinks = {
   __typename?: 'DocumentationProjectLinks';
+  /** Bluesky URL of the documentation project. */
+  bluesky?: Maybe<Scalars['String']['output']>;
   /** Daily.dev URL of the documentation project. */
   dailydev?: Maybe<Scalars['String']['output']>;
   /** GitHub URL of the documentation project. */
@@ -1802,6 +1916,7 @@ export type DocumentationProjectLinks = {
 };
 
 export type DocumentationProjectLinksInput = {
+  bluesky?: InputMaybe<Scalars['String']['input']>;
   dailydev?: InputMaybe<Scalars['String']['input']>;
   github?: InputMaybe<Scalars['String']['input']>;
   githubRepository?: InputMaybe<Scalars['String']['input']>;
@@ -1953,7 +2068,11 @@ export type DocumentationSidebarItemPage = IDocumentationNestableSidebarItem & I
   path: Scalars['String']['output'];
   status: DocumentationSidebarItemStatus;
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
-  /** URL of the published page. */
+  /**
+   * URL of the published page.
+   *
+   * Returns `null` if the page is not published.
+   */
   url?: Maybe<Scalars['String']['output']>;
   visibility: DocumentationSidebarItemVisibility;
 };
@@ -2007,6 +2126,11 @@ export type Draft = Node & {
   __typename?: 'Draft';
   /** The author of the draft. */
   author: User;
+  /**
+   * The banner image preference of the draft. Contains banner image URL and other details.
+   * Similar to cover image but user can use banner image as alternate cover on single post page.
+   */
+  bannerImage?: Maybe<DraftBannerImage>;
   canonicalUrl?: Maybe<Scalars['String']['output']>;
   /**
    * Returns the user details of the co-authors of the post.
@@ -2074,6 +2198,13 @@ export type DraftBackup = {
   at?: Maybe<Scalars['DateTime']['output']>;
   /** The status of the backup i.e., success or failure. */
   status?: Maybe<BackupStatus>;
+};
+
+/** Contains information about the banner image of the draft. */
+export type DraftBannerImage = {
+  __typename?: 'DraftBannerImage';
+  /** The URL of the banner image. */
+  url: Scalars['String']['output'];
 };
 
 /**
@@ -2366,6 +2497,12 @@ export type GitHubActivityLog = Node & {
   branchName: Scalars['String']['output'];
   /** The date the log was created. */
   createdAt: Scalars['DateTime']['output'];
+  /** The deployment type related to the log. */
+  deploymentType: DocsGitHubActivityDeploymentType;
+  /** The deployment URL. For preview activities, the deployment URL is different for every commit. For production deployments, the deploymentUrl points to the main project subdomain. */
+  deploymentUrl: Scalars['String']['output'];
+  /** The errors occurred during the sync. */
+  errors: Array<GitHubSyncError>;
   /** The commit ID. */
   gitCommitId: Scalars['String']['output'];
   /** The commit message. */
@@ -2377,6 +2514,27 @@ export type GitHubActivityLog = Node & {
   /** The status of the sync. */
   status: GitHubSyncStatus;
 };
+
+export type GitHubSyncError = {
+  __typename?: 'GitHubSyncError';
+  /** The error code denoting the reason of failure for GitHub sync. */
+  code: GitHubSyncErrorCode;
+  /** List of error messages */
+  messages: Array<Scalars['String']['output']>;
+};
+
+export enum GitHubSyncErrorCode {
+  /** Indicates that the project has configuration errors. */
+  ConfigurationError = 'CONFIGURATION_ERROR',
+  /** Indicates that the project has invalid content. */
+  ContentError = 'CONTENT_ERROR',
+  /** Indicates that the project has duplicate paths. */
+  DuplicatePaths = 'DUPLICATE_PATHS',
+  /** Indicates that the project has duplicate slugs. */
+  DuplicateSlugs = 'DUPLICATE_SLUGS',
+  /** Indicates that the project has missing files. */
+  MissingFiles = 'MISSING_FILES'
+}
 
 /** Contains the flag indicating if the GitHub sync feature is enabled or not. */
 export type GitHubSyncFeature = Feature & {
@@ -2764,6 +2922,12 @@ export enum GuideProvider {
   Hashnode = 'HASHNODE'
 }
 
+export enum GuideVersionStatus {
+  Deprecated = 'DEPRECATED',
+  Stable = 'STABLE',
+  Unstable = 'UNSTABLE'
+}
+
 export type HeadlessCmsFeature = Feature & {
   __typename?: 'HeadlessCMSFeature';
   /** A flag indicating if the Headless CMS feature is enabled or not. */
@@ -2808,6 +2972,33 @@ export type IGuide = {
   status: DocumentationGuideItemStatus;
   /** The ID of the default version. */
   versionId?: Maybe<Scalars['String']['output']>;
+};
+
+export type IGuideVersion = {
+  /** Internal code name for the version. */
+  codeName?: Maybe<Scalars['String']['output']>;
+  /** Timestamp of when the version was created. */
+  createdAt: Scalars['DateTime']['output'];
+  /** The version that this version was forked from. */
+  forkedFrom?: Maybe<IGuideVersion>;
+  /** Unique identifier for the guide version. */
+  id: Scalars['ID']['output'];
+  /**
+   * Indicates if this is the default version.
+   *
+   * There is always exactly one default version at a given time.
+   */
+  isDefault: Scalars['Boolean']['output'];
+  /** Display name of the version. */
+  name: Scalars['String']['output'];
+  /** URL-friendly identifier for the version. */
+  slug: Scalars['String']['output'];
+  /** Status of the guide version. */
+  status: GuideVersionStatus;
+  /** Timestamp of the last update to the version. */
+  updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Visibility of the guide version. */
+  visibility: DocumentationGuideVisibility;
 };
 
 /**
@@ -3030,6 +3221,8 @@ export type Mutation = {
   acceptRoleBasedInvite: AcceptRoleBasedInvitePayload;
   /** Adds a comment to a post. */
   addComment: AddCommentPayload;
+  addContentBlock: AddContentBlockPayload;
+  addCustomMdxComponent: AddCustomMdxComponentPayload;
   addDocumentationProjectCustomDomain: AddDocumentationProjectCustomDomainPayload;
   /** Adds a post to a series. */
   addPostToSeries: AddPostToSeriesPayload;
@@ -3057,6 +3250,8 @@ export type Mutation = {
   /** Creates a new series. */
   createSeries: CreateSeriesPayload;
   createWebhook: CreateWebhookPayload;
+  deleteContentBlock: DeleteContentBlockPayload;
+  deleteCustomMdxComponent: DeleteCustomMdxComponentPayload;
   /** Deletes a role based invite. */
   deleteRoleBasedInvite: DeleteRoleBasedInvitePayload;
   deleteWebhook: DeleteWebhookPayload;
@@ -3165,6 +3360,8 @@ export type Mutation = {
   unsubscribeFromNewsletter: UnsubscribeFromNewsletterPayload;
   /** Updates a comment on a post. */
   updateComment: UpdateCommentPayload;
+  updateContentBlock: UpdateContentBlockPayload;
+  updateCustomMdxComponent: UpdateCustomMdxComponentPayload;
   updateDocumentationAppearance: UpdateDocumentationAppearancePayload;
   updateDocumentationGeneralSettings: UpdateDocumentationGeneralSettingsPayload;
   updateDocumentationGuide: UpdateDocumentationGuidePayload;
@@ -3206,6 +3403,16 @@ export type MutationAcceptRoleBasedInviteArgs = {
 
 export type MutationAddCommentArgs = {
   input: AddCommentInput;
+};
+
+
+export type MutationAddContentBlockArgs = {
+  input: AddContentBlockInput;
+};
+
+
+export type MutationAddCustomMdxComponentArgs = {
+  input: AddCustomMdxComponentInput;
 };
 
 
@@ -3291,6 +3498,16 @@ export type MutationCreateSeriesArgs = {
 
 export type MutationCreateWebhookArgs = {
   input: CreateWebhookInput;
+};
+
+
+export type MutationDeleteContentBlockArgs = {
+  input: DeleteContentBlockInput;
+};
+
+
+export type MutationDeleteCustomMdxComponentArgs = {
+  input: DeleteCustomMdxComponentInput;
 };
 
 
@@ -3585,6 +3802,16 @@ export type MutationUpdateCommentArgs = {
 };
 
 
+export type MutationUpdateContentBlockArgs = {
+  input: UpdateContentBlockInput;
+};
+
+
+export type MutationUpdateCustomMdxComponentArgs = {
+  input: UpdateCustomMdxComponentInput;
+};
+
+
 export type MutationUpdateDocumentationAppearanceArgs = {
   input: UpdateDocumentationAppearanceInput;
 };
@@ -3679,7 +3906,10 @@ export type MyUser = IUser & Node & {
   availableFor?: Maybe<Scalars['String']['output']>;
   /** Returns a list of badges that the user has earned. Shown on blogs /badges page. Example - https://iamshadmirza.com/badges */
   badges: Array<Badge>;
-  /** A list of beta features that the user has access to. Only available to the authenticated user. */
+  /**
+   * A list of beta features that the user has access to. Only available to the authenticated user.
+   * @deprecated Beta features are no longer supported. Will be removed after 15/12/2024
+   */
   betaFeatures: Array<BetaFeature>;
   /** The bio of the user. Visible in about me section of the user's profile. */
   bio?: Maybe<Content>;
@@ -4001,6 +4231,11 @@ export type Post = Node & {
   /** Returns the user details of the author of the post. */
   author: User;
   /**
+   * The banner image preference of the post. Contains banner image URL and other details.
+   * It is similar to cover image but users can decide to render banner image of single post view.
+   */
+  bannerImage?: Maybe<PostBannerImage>;
+  /**
    * Flag to indicate if the post is bookmarked by the requesting user.
    *
    * Returns `false` if the user is not authenticated.
@@ -4158,6 +4393,13 @@ export type PostBadgesFeature = Feature & {
   items: Array<PostBadge>;
 };
 
+/** Contains information about the banner image of the post. */
+export type PostBannerImage = {
+  __typename?: 'PostBannerImage';
+  /** The URL of the banner image. */
+  url: Scalars['String']['output'];
+};
+
 /**
  * Connection for comments. Contains a list of edges containing nodes.
  * Each node holds a comment.
@@ -4298,6 +4540,13 @@ export type PostPreferences = {
   /** A flag to indicate if the cover image is shown below title of the post. Default position of cover is top of title. */
   stickCoverToBottom: Scalars['Boolean']['output'];
 };
+
+export enum PostSortBy {
+  /** Sorts posts by date published in ascending order. */
+  DatePublishedAsc = 'DATE_PUBLISHED_ASC',
+  /** Sorts posts by date published in descending order. */
+  DatePublishedDesc = 'DATE_PUBLISHED_DESC'
+}
 
 /** Contains the publication's preferences for layout, theme and other personalisations. */
 export type Preferences = {
@@ -4600,6 +4849,7 @@ export type Publication = Node & {
   isTeam: Scalars['Boolean']['output'];
   /** Links to the publication's social media profiles. */
   links?: Maybe<PublicationLinks>;
+  members: PublicationMemberConnection;
   /** The meta tags associated with the publication. */
   metaTags?: Maybe<Scalars['String']['output']>;
   /** Information about the publication's Open Graph metadata i.e. image. */
@@ -4613,6 +4863,8 @@ export type Publication = Node & {
   postsViaPage: PublicationPostPageConnection;
   /** The publication preferences around layout, theme and other personalisations. */
   preferences: Preferences;
+  /** Returns a paginated list of public members of the publication. */
+  publicMembers: PublicationMemberConnection;
   /** Publications that are recommended by this publication. */
   recommendedPublications: Array<UserRecommendedPublicationEdge>;
   /** Publications that are recommending this publication. */
@@ -4693,6 +4945,17 @@ export type PublicationDraftsArgs = {
  * Contains basic information about the publication.
  * A publication is a blog that can be created for a user or a team.
  */
+export type PublicationMembersArgs = {
+  filter?: InputMaybe<PublicationMemberConnectionFilter>;
+  page: Scalars['Int']['input'];
+  pageSize: Scalars['Int']['input'];
+};
+
+
+/**
+ * Contains basic information about the publication.
+ * A publication is a blog that can be created for a user or a team.
+ */
 export type PublicationPostArgs = {
   slug: Scalars['String']['input'];
 };
@@ -4715,6 +4978,16 @@ export type PublicationPostsArgs = {
  */
 export type PublicationPostsViaPageArgs = {
   filter?: InputMaybe<PublicationPostsViaPageFilter>;
+  page: Scalars['Int']['input'];
+  pageSize: Scalars['Int']['input'];
+};
+
+
+/**
+ * Contains basic information about the publication.
+ * A publication is a blog that can be created for a user or a team.
+ */
+export type PublicationPublicMembersArgs = {
   page: Scalars['Int']['input'];
   pageSize: Scalars['Int']['input'];
 };
@@ -4853,10 +5126,14 @@ export type PublicationIntegrations = {
   gaTrackingID?: Maybe<Scalars['String']['output']>;
   /** Hotjar Site ID for integration with Hotjar. */
   hotjarSiteID?: Maybe<Scalars['String']['output']>;
+  /** Koala Public Key for integration with Koala. */
+  koalaPublicKey?: Maybe<Scalars['String']['output']>;
   /** Matomo Site ID for integration with Matomo Analytics. */
   matomoSiteID?: Maybe<Scalars['String']['output']>;
   /** Matomo URL for integration with Matomo Analytics. */
   matomoURL?: Maybe<Scalars['String']['output']>;
+  /** MS Clarity ID for integration with Microsoft Clarity. */
+  msClarityID?: Maybe<Scalars['String']['output']>;
   /** A flag indicating if the custom domain is enabled for integration with Plausible Analytics. */
   plausibleAnalyticsEnabled?: Maybe<Scalars['Boolean']['output']>;
   /** The share ID for the Hashnode-provided Umami analytics instance. */
@@ -4910,6 +5187,8 @@ export enum PublicationLayout {
 /** Contains the publication's social media links. */
 export type PublicationLinks = {
   __typename?: 'PublicationLinks';
+  /** Bluesky URL of the publication. */
+  bluesky?: Maybe<Scalars['String']['output']>;
   /** Daily.dev URL of the publication. */
   dailydev?: Maybe<Scalars['String']['output']>;
   /** Facebook URL of the publication. */
@@ -4946,6 +5225,22 @@ export type PublicationMember = Node & {
   role: UserPublicationRole;
   /** The user who is a member of the publication. */
   user?: Maybe<User>;
+};
+
+export type PublicationMemberConnection = PageConnection & {
+  __typename?: 'PublicationMemberConnection';
+  /** A list of members */
+  nodes: Array<PublicationMember>;
+  /** Information for page based pagination in Member connection. */
+  pageInfo: OffsetPageInfo;
+  /** The total number of documents in the connection. */
+  totalDocuments: Scalars['Int']['output'];
+};
+
+/** The filter for the publication member connection. */
+export type PublicationMemberConnectionFilter = {
+  /** Search filter can be used to filter members by their username or email. */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Publication member privacy state on members page */
@@ -5012,6 +5307,10 @@ export type PublicationPostConnectionFilter = {
   deletedOnly?: InputMaybe<Scalars['Boolean']['input']>;
   /** Remove pinned post from the result set. */
   excludePinnedPost?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Tags AND filter. All tags must be present in the post. */
+  requiredTagSlugs?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Tags AND filter. All tags must be present in the post. */
+  requiredTags?: InputMaybe<Array<Scalars['ID']['input']>>;
   /**
    * Filtering by tag slugs and tag IDs will return posts that match either of the filters.
    *
@@ -5152,6 +5451,11 @@ export type PublishDraftPayload = {
 
 /** Contains information about the post to be published. */
 export type PublishPostInput = {
+  /**
+   * Options for the banner image of the post.
+   * It is similar to cover image but users can decide to render banner image of single post view.
+   */
+  bannerImageOptions?: InputMaybe<BannerImageOptionsInput>;
   /** Ids of the co-authors of the post. */
   coAuthors?: InputMaybe<Array<Scalars['ObjectId']['input']>>;
   /** Content of the post in markdown format. */
@@ -5315,6 +5619,7 @@ export type QuerySearchPostsOfPublicationArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   filter: SearchPostsOfPublicationFilter;
   first: Scalars['Int']['input'];
+  sortBy?: InputMaybe<PostSortBy>;
 };
 
 
@@ -5768,9 +6073,6 @@ export type ScheduledPost = Node & {
 export enum Scope {
   AcknowledgeEmailImport = 'acknowledge_email_import',
   ActiveProUser = 'active_pro_user',
-  AssignProPublications = 'assign_pro_publications',
-  ChangeProSubscription = 'change_pro_subscription',
-  CreatePro = 'create_pro',
   DeleteDraft = 'delete_draft',
   DocsAdminOrOwner = 'docs_admin_or_owner',
   DocsOwner = 'docs_owner',
@@ -5829,6 +6131,8 @@ export type SearchPostsOfPublicationFilter = {
   publicationId: Scalars['ObjectId']['input'];
   /** The query to be searched in post. */
   query?: InputMaybe<Scalars['String']['input']>;
+  /** Tags AND filter. All tags must be present in the post. */
+  requiredTagsIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** An array of tag Ids to filter the posts. */
   tagIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Filter based on time range. */
@@ -5938,6 +6242,8 @@ export type SetDocumentationSidebarItemVisibilityPayload = {
 /** Available social media links. */
 export type SocialMediaLinks = {
   __typename?: 'SocialMediaLinks';
+  /** The user's Bluesky profile. */
+  bluesky?: Maybe<Scalars['String']['output']>;
   /** The user's Facebook profile. */
   facebook?: Maybe<Scalars['String']['output']>;
   /** The user's GitHub profile. */
@@ -6279,6 +6585,29 @@ export type UpdateCommentPayload = {
   comment?: Maybe<Comment>;
 };
 
+export type UpdateContentBlockInput = {
+  content: Scalars['String']['input'];
+  embedId: Scalars['String']['input'];
+  label: Scalars['String']['input'];
+  projectId: Scalars['ID']['input'];
+};
+
+export type UpdateContentBlockPayload = {
+  __typename?: 'UpdateContentBlockPayload';
+  project: DocumentationProject;
+};
+
+export type UpdateCustomMdxComponentInput = {
+  code: Scalars['String']['input'];
+  componentId: Scalars['String']['input'];
+  projectId: Scalars['ID']['input'];
+};
+
+export type UpdateCustomMdxComponentPayload = {
+  __typename?: 'UpdateCustomMdxComponentPayload';
+  project: DocumentationProject;
+};
+
 export type UpdateDocumentationAppearanceInput = {
   appearance: DocumentationProjectAppearanceInput;
   projectId: Scalars['ID']['input'];
@@ -6398,6 +6727,8 @@ export type UpdateDocumentationSectionPayload = {
 };
 
 export type UpdatePostInput = {
+  /** Options for the banner image of the post. */
+  bannerImageOptions?: InputMaybe<BannerImageOptionsInput>;
   /**
    * Update co-authors of the post.
    * Must be a member of the publication.
@@ -6584,8 +6915,6 @@ export type User = IUser & Node & {
   followsBack: Scalars['Boolean']['output'];
   /** The ID of the user. It can be used to identify the user. */
   id: Scalars['ID']['output'];
-  /** Whether or not this is a pro user. */
-  isPro: Scalars['Boolean']['output'];
   /** The location of the user. */
   location?: Maybe<Scalars['String']['output']>;
   /** The name of the user. */
@@ -6808,8 +7137,6 @@ export type UserPublicationsConnection = Connection & {
 
 /** Filter to apply to the publications. */
 export type UserPublicationsConnectionFilter = {
-  /** Only return pro publications. */
-  isPro?: InputMaybe<Scalars['Boolean']['input']>;
   /** Only include publication in which the user has one of the provided roles. */
   roles?: InputMaybe<Array<UserPublicationRole>>;
 };
@@ -6890,6 +7217,13 @@ export type VerifyDocumentationProjectCustomDomainPayload = {
    * Note, that the verification can also fail.
    */
   project?: Maybe<DocumentationProject>;
+};
+
+/** Contains the flag indicating if the Versioning feature is enabled or not. */
+export type VersioningFeature = Feature & {
+  __typename?: 'VersioningFeature';
+  /** A flag indicating if the Versioning feature is enabled or not. */
+  isEnabled: Scalars['Boolean']['output'];
 };
 
 /**
